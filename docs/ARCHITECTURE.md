@@ -6,20 +6,48 @@ Unified real-time stream of notable events across all Polkadot parachains. Aggre
 
 ---
 
+## Monorepo Structure
+
+```
+polkadot-activity-feed/
+├── packages/
+│   ├── frontend/          — Next.js web UI
+│   │   └── src/
+│   │       ├── app/       — App Router pages
+│   │       └── components/— React components
+│   ├── backend/           — API + event ingestion server
+│   │   └── src/
+│   │       ├── routes/    — HTTP + WebSocket endpoints
+│   │       ├── services/  — Database, Redis, chain connections
+│   │       └── handlers/  — Event normalization per chain
+│   └── shared/            — Shared code between frontend/backend
+│       └── src/
+│           ├── types.ts   — Unified event schema, filters
+│           ├── chains.ts  — Chain configs + endpoints
+│           └── constants.ts
+├── docs/
+├── package.json           — npm workspaces root
+└── tsconfig.base.json     — Shared TS config
+```
+
+---
+
 ## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    FRONTEND                          │
 │  Next.js + Tailwind + shadcn/ui                     │
-│  PAPI + Smoldot (optional in-browser light client)  │
-│  WebSocket client for real-time push                 │
+│  packages/frontend (port 3000)                      │
+│  WebSocket client → backend for real-time push      │
 └──────────────────────┬──────────────────────────────┘
-                       │
+                       │ HTTP + WebSocket
 ┌──────────────────────▼──────────────────────────────┐
-│                   API LAYER                          │
-│  GraphQL (unified query) + WebSocket (push)          │
-│  Event normalization + enrichment                    │
+│                    BACKEND                           │
+│  Fastify + WebSocket server                         │
+│  packages/backend (port 3001)                       │
+│  REST API + WebSocket push                          │
+│  Event normalization + enrichment                   │
 └───────┬──────────────────────────────┬──────────────┘
         │                              │
 ┌───────▼───────┐            ┌─────────▼─────────────┐
@@ -46,35 +74,41 @@ Unified real-time stream of notable events across all Polkadot parachains. Aggre
 
 ## Tech Stack
 
-| Layer | Technology | Reason |
-|-------|-----------|--------|
-| Chain interaction | **PAPI** (`polkadot-api`) | Modern, typed, <50KB, light-client ready |
-| Historical indexing | **SubQuery** | Best multi-chain Substrate support, unified GraphQL |
-| Real-time streaming | **PAPI WebSocket + Redis Pub/Sub** | Low latency event push |
-| Database | **PostgreSQL + TimescaleDB** | Relational + time-series queries |
-| API | **GraphQL + WebSocket server** | Unified query + push |
-| Frontend | **Next.js + Tailwind + shadcn/ui** | Standard in Polkadot ecosystem |
-| RPC provider | **OnFinality** (free: 400K req/day) | 134+ networks, archive nodes |
-| Alerts | **Telegram bot + Discord webhook** | Multi-channel delivery |
+| Layer | Technology | Package | Reason |
+|-------|-----------|---------|--------|
+| Chain interaction | **PAPI** (`polkadot-api`) | backend | Modern, typed, <50KB, light-client ready |
+| Historical indexing | **SubQuery** | backend | Best multi-chain Substrate support, unified GraphQL |
+| Real-time streaming | **PAPI WebSocket + Redis Pub/Sub** | backend | Low latency event push |
+| Database | **PostgreSQL + TimescaleDB** | backend | Relational + time-series queries |
+| API server | **Fastify + WebSocket** | backend | High perf, plugin ecosystem |
+| Frontend | **Next.js + Tailwind + shadcn/ui** | frontend | Standard in Polkadot ecosystem |
+| Shared types | **TypeScript** | shared | Type safety across packages |
+| RPC provider | **OnFinality** (free: 400K req/day) | backend | 134+ networks, archive nodes |
+| Alerts | **Telegram bot + Discord webhook** | backend | Multi-channel delivery |
 
 ---
 
 ## Data Flow
 
-### Ingestion Pipeline
+### Ingestion Pipeline (Backend)
 
 1. **PAPI subscribers** connect to each parachain via WebSocket (OnFinality endpoints)
 2. Subscribe to `system.events` per block using `typedApi.event.{Pallet}.{Event}.watch()`
-3. Raw events → **Event Normalizer** → unified schema
+3. Raw events → **Event Normalizer** (handlers/) → unified schema
 4. Normalized events written to PostgreSQL + published to Redis Pub/Sub
 5. WebSocket server pushes new events to connected frontend clients
 
-### Historical Backfill
+### Historical Backfill (Backend)
 
 1. SubQuery indexer processes historical blocks per chain
 2. Maps pallet events to unified schema
 3. Stores in same PostgreSQL database
-4. Exposed via auto-generated GraphQL API
+
+### API Layer (Backend → Frontend)
+
+- `GET /api/events` — paginated, filterable event query
+- `GET /health` — health check
+- WebSocket `/ws` — real-time event push
 
 ---
 
@@ -96,6 +130,8 @@ Unified real-time stream of notable events across all Polkadot parachains. Aggre
 ---
 
 ## Unified Event Schema
+
+Defined in `packages/shared/src/types.ts`. PostgreSQL table:
 
 ```sql
 CREATE TABLE events (
@@ -128,11 +164,15 @@ CREATE INDEX idx_events_significance ON events (significance, timestamp DESC);
 | PAPI | `polkadot-api` | Chain interaction, typed event subscriptions |
 | PAPI Smoldot | `polkadot-api/smoldot` | In-browser light client |
 | PAPI descriptors | `@polkadot-api/descriptors` | Type-safe chain bindings |
-| SubQuery SDK | `@subql/node`, `@subql/query` | Historical indexing |
+| Fastify | `fastify` | HTTP + WebSocket server |
+| ioredis | `ioredis` | Redis Pub/Sub |
+| pg | `pg` | PostgreSQL client |
 
 ---
 
 ## RPC Endpoints (MVP chains)
+
+Defined in `packages/shared/src/chains.ts`.
 
 | Chain | WebSocket | Provider |
 |-------|-----------|----------|
