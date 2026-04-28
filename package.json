@@ -1,0 +1,14 @@
+{
+  "name": "polkadot-activity-feed",
+  "version": "0.1.0",
+  "description": "Unified real-time activity feed across all Polkadot parachains",
+  "private": true,
+  "author": "minato32",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --ext .ts,.tsx"
+  }
+}
