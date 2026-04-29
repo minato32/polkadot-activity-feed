@@ -7,12 +7,23 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { PresetManager } from "@/components/presets/PresetManager";
 import { NotificationSettings } from "./NotificationSettings";
 import { DigestSettings } from "./DigestSettings";
+import { ApiKeyManager } from "./ApiKeyManager";
+import { WebhookManager } from "./WebhookManager";
+import { ExportPanel } from "./ExportPanel";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import type { FilterPreset, NotificationChannel } from "@polkadot-feed/shared";
 import type { FeedFilterState } from "@/components/feed/FeedPage";
 
-type Tab = "presets" | "notifications" | "digest";
+type Tab = "presets" | "notifications" | "digest" | "developer" | "export";
+
+const TAB_LABELS: Record<Tab, string> = {
+  presets: "Presets",
+  notifications: "Alerts",
+  digest: "Digest",
+  developer: "Developer",
+  export: "Export",
+};
 
 const DEFAULT_FILTERS: FeedFilterState = {
   chains: [],
@@ -65,7 +76,6 @@ export function SettingsPage() {
   }
 
   function handleApplyPreset(preset: FilterPreset) {
-    // Route to feed with preset applied — stored in sessionStorage for FeedPage to pick up
     sessionStorage.setItem("applyPreset", JSON.stringify(preset.filters));
     window.location.href = "/";
   }
@@ -94,30 +104,34 @@ export function SettingsPage() {
     await updateNotification(id, { enabled });
   }
 
+  const allTabs: Tab[] = ["presets", "notifications", "digest", "developer", "export"];
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6">
         <h1 className="mb-1 text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-gray-400">
-          Manage filter presets and notification alerts.
+          Manage filter presets, alerts, and developer access.
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 flex gap-1 rounded-lg border border-gray-800 bg-gray-900 p-1">
-        {(["presets", "notifications", "digest"] as Tab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 rounded-md py-2 text-sm font-medium capitalize transition-colors ${
-              activeTab === tab
-                ? "bg-gray-700 text-gray-100"
-                : "text-gray-500 hover:text-gray-300"
-            }`}
-          >
-            {tab === "notifications" ? "Alerts" : tab === "digest" ? "Digest" : "Presets"}
-          </button>
-        ))}
+      {/* Tabs — scrollable on mobile */}
+      <div className="mb-6 overflow-x-auto">
+        <div className="flex min-w-max gap-1 rounded-lg border border-gray-800 bg-gray-900 p-1">
+          {allTabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                activeTab === tab
+                  ? "bg-gray-700 text-gray-100"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {TAB_LABELS[tab]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeTab === "presets" && (
@@ -145,6 +159,26 @@ export function SettingsPage() {
       )}
 
       {activeTab === "digest" && <DigestSettings />}
+
+      {activeTab === "developer" && (
+        <div className="space-y-8">
+          <section>
+            <h2 className="mb-4 text-lg font-semibold">API Keys</h2>
+            <ApiKeyManager tier={user.tier} />
+          </section>
+          <section>
+            <h2 className="mb-4 text-lg font-semibold">Webhooks</h2>
+            <WebhookManager />
+          </section>
+        </div>
+      )}
+
+      {activeTab === "export" && (
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Export Events</h2>
+          <ExportPanel tier={user.tier} />
+        </section>
+      )}
     </main>
   );
 }
