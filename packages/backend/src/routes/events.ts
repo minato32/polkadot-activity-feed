@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type {
   PaginatedResponse,
   ChainEvent,
+  EventRow,
 } from "@polkadot-feed/shared";
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@polkadot-feed/shared";
 import { query } from "../services/database.js";
@@ -85,7 +86,7 @@ export function registerEventRoutes(app: FastifyInstance) {
         LIMIT $${paramIdx}
       `;
 
-      const result = await query(sql, params);
+      const result = await query<EventRow>(sql, params);
       const hasMore = result.rows.length > limit;
       const rows = hasMore ? result.rows.slice(0, limit) : result.rows;
       const events = rows.map(rowToEvent);

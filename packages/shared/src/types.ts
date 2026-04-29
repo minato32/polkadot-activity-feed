@@ -117,3 +117,75 @@ export interface EventRow {
   significance: number;
   created_at: string;
 }
+
+// ─── User & Auth Types ────────────────────────────────────────────────────────
+
+/** Subscription tier controlling feature access and limits */
+export type UserTier = "free" | "pro" | "whale" | "enterprise";
+
+/** Per-tier limits for wallets and presets */
+export interface TierLimits {
+  wallets: number | null; // null = unlimited
+  presets: number | null; // null = unlimited
+}
+
+/** Registered user with wallet-based identity */
+export interface User {
+  id: string;
+  address: string; // SS58-encoded wallet address
+  displayName: string | null;
+  tier: UserTier;
+  createdAt: string;
+}
+
+/** A wallet the user is tracking */
+export interface FollowedWallet {
+  id: string;
+  userId: string;
+  address: string;
+  label: string | null;
+  chainId: ChainId | null;
+  createdAt: string;
+}
+
+/** A saved filter configuration the user can reuse */
+export interface FilterPreset {
+  id: string;
+  userId: string;
+  name: string;
+  filters: EventFilter;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+/** Supported notification delivery channels */
+export type NotificationChannel = "telegram" | "discord";
+
+/** A notification config linking a user, channel, and preset */
+export interface NotificationConfig {
+  id: string;
+  userId: string;
+  channel: NotificationChannel;
+  presetId: string;
+  config: NotificationChannelConfig;
+  enabled: boolean;
+  createdAt: string;
+}
+
+/** Channel-specific config (discriminated by the NotificationChannel field) */
+export type NotificationChannelConfig =
+  | { chatId: string }
+  | { webhookUrl: string };
+
+/** Request payload for wallet-challenge auth flow */
+export interface AuthPayload {
+  address: string;
+  signature: string;
+  message: string;
+}
+
+/** Response returned after successful authentication */
+export interface AuthResponse {
+  token: string;
+  user: User;
+}

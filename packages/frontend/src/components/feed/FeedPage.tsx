@@ -10,6 +10,7 @@ export interface FeedFilterState {
   chains: ChainId[];
   eventTypes: EventType[];
   minSignificance: Significance;
+  accounts?: string[];
 }
 
 const DEFAULT_FILTERS: FeedFilterState = {
