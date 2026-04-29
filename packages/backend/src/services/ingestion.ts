@@ -4,6 +4,8 @@ import { getClient, updateLastBlock } from "./chain-connection.js";
 import { normalizeEvent, type RawChainEvent } from "../handlers/event-normalizer.js";
 import { insertEvent } from "./event-store.js";
 import { publishEvent } from "./redis.js";
+import { recordXcmSent, matchXcmReceived } from "./xcm-correlation.js";
+import { enrichGovernanceEvent } from "./governance.js";
 
 /** Active subscription cleanup functions */
 const subscriptions = new Map<ChainId, () => void>();
@@ -72,6 +74,17 @@ export async function processRawEvents(
     const normalized = normalizeEvent(raw);
     if (!normalized) continue;
 
+    // Enrich governance events with on-chain context before storage
+    let governanceCtx = undefined;
+    if (
+      normalized.eventType === "governance_submitted" ||
+      normalized.eventType === "governance_vote" ||
+      normalized.eventType === "governance_confirmed" ||
+      normalized.eventType === "governance_rejected"
+    ) {
+      governanceCtx = enrichGovernanceEvent(normalized);
+    }
+
     try {
       const id = await insertEvent(normalized);
 
@@ -80,9 +93,30 @@ export async function processRawEvents(
         ...normalized,
         timestamp: normalized.timestamp.toISOString(),
         createdAt: new Date().toISOString(),
+        ...(governanceCtx ? { governanceContext: governanceCtx } : {}),
       };
 
       await publishEvent(chainId, JSON.stringify(chainEvent));
+
+      // XCM correlation hooks
+      const messageHash =
+        typeof normalized.data["messageHash"] === "string"
+          ? normalized.data["messageHash"]
+          : null;
+
+      if (normalized.eventType === "xcm_sent" && messageHash) {
+        recordXcmSent(chainId, id, messageHash).catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`XCM correlation recordSent failed: ${msg}`);
+        });
+      }
+
+      if (normalized.eventType === "xcm_received" && messageHash) {
+        matchXcmReceived(chainId, id, messageHash).catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`XCM correlation matchReceived failed: ${msg}`);
+        });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`Ingestion ${chainId}: failed to store event — ${msg}`);
