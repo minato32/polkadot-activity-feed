@@ -1,8 +1,18 @@
+import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
-import { registerEventRoutes } from "./routes/events.js";
 import { registerHealthRoutes } from "./routes/health.js";
+import { registerEventRoutes } from "./routes/events.js";
+import {
+  registerWebSocketRoutes,
+  startWebSocketFanout,
+  startHeartbeat,
+} from "./routes/websocket.js";
+import { connectAllChains, disconnectAllChains } from "./services/chain-connection.js";
+import { startAllIngestion, stopAllIngestion } from "./services/ingestion.js";
+import { closePool } from "./services/database.js";
+import { closeRedis } from "./services/redis.js";
 
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST || "0.0.0.0";
@@ -16,11 +26,35 @@ async function main() {
 
   await app.register(websocket);
 
+  // Register routes
   registerHealthRoutes(app);
   registerEventRoutes(app);
+  registerWebSocketRoutes(app);
 
+  // Start server
   await app.listen({ port: PORT, host: HOST });
   app.log.info(`Backend running on ${HOST}:${PORT}`);
+
+  // Connect to chains and start ingestion
+  connectAllChains();
+  await startAllIngestion();
+  await startWebSocketFanout();
+  const heartbeatInterval = startHeartbeat();
+
+  // Graceful shutdown
+  const shutdown = async () => {
+    app.log.info("Shutting down...");
+    clearInterval(heartbeatInterval);
+    stopAllIngestion();
+    await disconnectAllChains();
+    await closeRedis();
+    await closePool();
+    await app.close();
+    process.exit(0);
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 }
 
 main().catch((err) => {
