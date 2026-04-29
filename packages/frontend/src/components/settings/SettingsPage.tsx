@@ -6,12 +6,13 @@ import { usePresets } from "@/hooks/usePresets";
 import { useNotifications } from "@/hooks/useNotifications";
 import { PresetManager } from "@/components/presets/PresetManager";
 import { NotificationSettings } from "./NotificationSettings";
+import { DigestSettings } from "./DigestSettings";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import type { FilterPreset, NotificationChannel } from "@polkadot-feed/shared";
 import type { FeedFilterState } from "@/components/feed/FeedPage";
 
-type Tab = "presets" | "notifications";
+type Tab = "presets" | "notifications" | "digest";
 
 const DEFAULT_FILTERS: FeedFilterState = {
   chains: [],
@@ -104,7 +105,7 @@ export function SettingsPage() {
 
       {/* Tabs */}
       <div className="mb-6 flex gap-1 rounded-lg border border-gray-800 bg-gray-900 p-1">
-        {(["presets", "notifications"] as Tab[]).map((tab) => (
+        {(["presets", "notifications", "digest"] as Tab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -114,7 +115,7 @@ export function SettingsPage() {
                 : "text-gray-500 hover:text-gray-300"
             }`}
           >
-            {tab === "notifications" ? "Alerts" : "Presets"}
+            {tab === "notifications" ? "Alerts" : tab === "digest" ? "Digest" : "Presets"}
           </button>
         ))}
       </div>
@@ -142,6 +143,8 @@ export function SettingsPage() {
           onDelete={deleteNotification}
         />
       )}
+
+      {activeTab === "digest" && <DigestSettings />}
     </main>
   );
 }
