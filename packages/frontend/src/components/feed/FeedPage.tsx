@@ -24,12 +24,12 @@ export function FeedPage() {
   const { events, hasMore, isLoading, loadMore } = useEvents(filters);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="mb-1 text-3xl font-bold tracking-tight">
+    <main className="mx-auto max-w-5xl px-3 py-6 sm:px-4 sm:py-8">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="mb-1 text-2xl font-bold tracking-tight sm:text-3xl">
           Polkadot Activity Feed
         </h1>
-        <p className="text-gray-400">
+        <p className="text-sm text-gray-400 sm:text-base">
           Real-time events across Polkadot parachains
         </p>
       </div>
