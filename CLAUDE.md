@@ -56,6 +56,21 @@ npm run build -w packages/shared
 - Backend services in `packages/backend/src/services/`
 - Event handlers in `packages/backend/src/handlers/`
 
+## Agents (5-agent pipeline)
+
+| Agent | Model | Role |
+|---|---|---|
+| `architect` | Opus | Plan features, create issues, manage lifecycle |
+| `frontend-engineer` | Sonnet | Implement FE in packages/frontend |
+| `backend-engineer` | Sonnet | Implement BE in packages/backend + packages/shared |
+| `test-writer` | Sonnet | Write + run tests for PRs |
+| `pr-reviewer` | Opus | Code review, quality gate, approve, merge |
+
+Pipeline: Plan → Implement (BE first) → Test → Review → Merge
+
+See `.claude/agents/WORKFLOW.md` for full pipeline details.
+See `.claude/agents/PR-REVIEW-WORKFLOW.md` for review process.
+
 ## Key Files
 
 - `docs/ARCHITECTURE.md` — System architecture, data flow, event schema
@@ -63,6 +78,9 @@ npm run build -w packages/shared
 - `packages/shared/src/types.ts` — Unified event schema types
 - `packages/shared/src/chains.ts` — MVP chain configurations
 - `packages/backend/.env.example` — Backend environment variables
+- `.claude/agents/WORKFLOW.md` — Agent pipeline and conventions
+- `.claude/agents/PR-REVIEW-WORKFLOW.md` — PR review process
+- `.claude/agents/memory/mistakes-log.md` — Shared learnings (read before every task)
 
 ## MVP Chains
 

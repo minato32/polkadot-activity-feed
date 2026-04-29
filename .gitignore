@@ -45,3 +45,6 @@ coverage/
 
 # Turbo (if added later)
 .turbo/
+
+# Agent memory (local only)
+.claude/agents/memory/
