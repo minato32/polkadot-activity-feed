@@ -1,7 +1,16 @@
 import type { FastifyInstance } from "fastify";
+import { healthCheck as dbHealthCheck } from "../services/database.js";
 
 export function registerHealthRoutes(app: FastifyInstance) {
   app.get("/health", async () => {
-    return { status: "ok", timestamp: new Date().toISOString() };
+    const dbHealthy = await dbHealthCheck();
+
+    return {
+      status: dbHealthy ? "ok" : "degraded",
+      timestamp: new Date().toISOString(),
+      services: {
+        database: dbHealthy ? "up" : "down",
+      },
+    };
   });
 }
