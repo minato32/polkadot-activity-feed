@@ -6,12 +6,13 @@ import type {
   Significance,
 } from "@polkadot-feed/shared";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
 
 export interface FetchEventsParams {
   chains?: ChainId[];
   eventTypes?: EventType[];
   minSignificance?: Significance;
+  accounts?: string[];
   limit?: number;
   cursor?: string;
 }
@@ -30,6 +31,9 @@ export async function fetchEvents(
   }
   if (params.minSignificance !== undefined) {
     url.searchParams.set("minSignificance", String(params.minSignificance));
+  }
+  if (params.accounts && params.accounts.length > 0) {
+    url.searchParams.set("accounts", params.accounts.join(","));
   }
   if (params.limit !== undefined) {
     url.searchParams.set("limit", String(params.limit));
