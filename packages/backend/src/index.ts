@@ -10,6 +10,7 @@ import {
   startHeartbeat,
 } from "./routes/websocket.js";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { registerWalletRoutes } from "./routes/wallets.js";
 import { connectAllChains, disconnectAllChains } from "./services/chain-connection.js";
 import { startAllIngestion, stopAllIngestion } from "./services/ingestion.js";
 import { closePool } from "./services/database.js";
@@ -32,6 +33,7 @@ async function main() {
   registerEventRoutes(app);
   registerWebSocketRoutes(app);
   registerAuthRoutes(app);
+  registerWalletRoutes(app);
 
   // Start server
   await app.listen({ port: PORT, host: HOST });
