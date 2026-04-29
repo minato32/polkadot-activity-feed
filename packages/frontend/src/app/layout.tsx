@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
 import { TopNav } from "@/components/layout/TopNav";
+import { MobileNav } from "@/components/layout/MobileNav";
 
 export const metadata: Metadata = {
   title: "Polkadot Activity Feed",
@@ -19,7 +20,9 @@ export default function RootLayout({
       <body className="bg-gray-950 text-gray-100 antialiased">
         <AuthProvider>
           <TopNav />
-          {children}
+          {/* pb-16 reserves space for MobileNav on small screens */}
+          <div className="pb-16 sm:pb-0">{children}</div>
+          <MobileNav />
         </AuthProvider>
       </body>
     </html>

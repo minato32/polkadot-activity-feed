@@ -7,6 +7,7 @@ import { useEventStream } from "./useEventStream";
 import type { FeedFilterState } from "@/components/feed/FeedPage";
 
 const PAGE_SIZE = 50;
+const DEBOUNCE_MS = 300;
 
 interface UseEventsResult {
   events: ChainEvent[];
@@ -15,7 +16,7 @@ interface UseEventsResult {
   loadMore: () => Promise<void>;
 }
 
-/** Combines REST pagination with WebSocket live updates */
+/** Combines REST pagination with WebSocket live updates, with debounced filter changes */
 export function useEvents(filters: FeedFilterState): UseEventsResult {
   const [events, setEvents] = useState<ChainEvent[]>([]);
   const [hasMore, setHasMore] = useState(false);
@@ -24,6 +25,8 @@ export function useEvents(filters: FeedFilterState): UseEventsResult {
 
   // Deduplicate by id using a set
   const seenIds = useRef<Set<string>>(new Set());
+  // Track pending loadMore to prevent double-fetches
+  const loadingMore = useRef(false);
 
   const addEvents = useCallback(
     (incoming: ChainEvent[], prepend = false) => {
@@ -39,17 +42,17 @@ export function useEvents(filters: FeedFilterState): UseEventsResult {
 
   const filtersKey = JSON.stringify(filters);
 
-  // Initial load and filter change reload
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Debounced initial load and filter change reload
   useEffect(() => {
     let cancelled = false;
-    seenIds.current = new Set();
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    setIsLoading(true);
-    setEvents([]);
-    setCursor(null);
+    const doFetch = async () => {
+      seenIds.current = new Set();
+      setIsLoading(true);
+      setEvents([]);
+      setCursor(null);
 
-    void (async () => {
       try {
         const result = await fetchEvents({
           chains: filters.chains.length > 0 ? filters.chains : undefined,
@@ -70,15 +73,22 @@ export function useEvents(filters: FeedFilterState): UseEventsResult {
       } finally {
         if (!cancelled) setIsLoading(false);
       }
-    })();
+    };
+
+    timeoutId = setTimeout(() => {
+      void doFetch();
+    }, DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
-  }, [filtersKey]); // filtersKey is a stable serialization of the filters object
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersKey]);
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || !cursor) return;
+    if (!hasMore || !cursor || loadingMore.current) return;
+    loadingMore.current = true;
     try {
       const result = await fetchEvents({
         chains: filters.chains.length > 0 ? filters.chains : undefined,
@@ -93,6 +103,8 @@ export function useEvents(filters: FeedFilterState): UseEventsResult {
       setCursor(result.nextCursor);
     } catch {
       // Error handled silently; user can retry via the button
+    } finally {
+      loadingMore.current = false;
     }
   }, [hasMore, cursor, filters, addEvents]);
 

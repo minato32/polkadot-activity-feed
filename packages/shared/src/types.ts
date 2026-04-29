@@ -269,3 +269,91 @@ export interface GovernanceContext {
   } | null;
   status: string | null;
 }
+
+// ─── Scale & Polish Types ─────────────────────────────────────────────────────
+
+/** Extended chain identifiers including parachains beyond the MVP set */
+export type ExpandedChainId =
+  | ChainId
+  | "astar"
+  | "phala"
+  | "interlay"
+  | "centrifuge"
+  | "bifrost"
+  | "zeitgeist"
+  | "pendulum"
+  | "unique"
+  | "kilt"
+  | "nodle";
+
+/** Date range filter with ISO 8601 string boundaries */
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+/** Amount range filter in native token base units */
+export interface AmountRange {
+  min?: number;
+  max?: number;
+}
+
+/** Full-text + faceted search query */
+export interface SearchQuery {
+  query?: string;
+  filters?: {
+    chains?: ExpandedChainId[];
+    eventTypes?: EventType[];
+    dateRange?: DateRange;
+    amountRange?: AmountRange;
+  };
+  pagination?: {
+    limit?: number;
+    cursor?: string;
+  };
+}
+
+/** Supported export formats */
+export type ExportFormat = "csv";
+
+/** Request parameters for exporting events */
+export interface ExportRequest {
+  chains?: ExpandedChainId[];
+  eventTypes?: EventType[];
+  dateRange?: DateRange;
+  format: ExportFormat;
+}
+
+/** Developer API key with tier-based rate limiting */
+export interface ApiKey {
+  id: string;
+  userId: string;
+  key: string;
+  name: string;
+  tier: UserTier;
+  requestsToday: number;
+  requestsLimit: number;
+  createdAt: string;
+}
+
+/** Webhook delivery configuration for a user */
+export interface WebhookConfig {
+  id: string;
+  userId: string;
+  url: string;
+  secret: string;
+  presetId: string | null;
+  enabled: boolean;
+  createdAt: string;
+}
+
+/** Record of a single webhook delivery attempt */
+export interface WebhookDelivery {
+  id: string;
+  webhookConfigId: string;
+  eventId: string;
+  status: "pending" | "delivered" | "failed";
+  attempts: number;
+  lastAttemptAt: string | null;
+  createdAt: string;
+}

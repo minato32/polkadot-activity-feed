@@ -1,10 +1,10 @@
 import { createClient } from "polkadot-api";
 import { getWsProvider } from "polkadot-api/ws-provider/node";
-import type { ChainId, ChainConfig } from "@polkadot-feed/shared";
-import { MVP_CHAINS } from "@polkadot-feed/shared";
+import type { ChainConfig, ExpandedChainId } from "@polkadot-feed/shared";
+import { MVP_CHAINS, type ExpandedChainConfig } from "@polkadot-feed/shared";
 
 export interface ChainStatus {
-  chainId: ChainId;
+  chainId: ExpandedChainId;
   connected: boolean;
   lastBlockSeen: number | null;
   lastError: string | null;
@@ -12,20 +12,20 @@ export interface ChainStatus {
 }
 
 interface ChainConnection {
-  config: ChainConfig;
+  config: ChainConfig | ExpandedChainConfig;
   client: ReturnType<typeof createClient>;
   provider: ReturnType<typeof getWsProvider>;
   status: ChainStatus;
 }
 
-const connections = new Map<ChainId, ChainConnection>();
+const connections = new Map<ExpandedChainId, ChainConnection>();
 
 // Reserved for future reconnection logic
 // const MAX_RECONNECT_DELAY = 30_000;
 // const BASE_RECONNECT_DELAY = 1_000;
 
 /** Connect to a single chain via PAPI WebSocket */
-export function connectChain(config: ChainConfig): ChainConnection {
+export function connectChain(config: ChainConfig | ExpandedChainConfig): ChainConnection {
   const status: ChainStatus = {
     chainId: config.id,
     connected: false,
@@ -47,9 +47,12 @@ export function connectChain(config: ChainConfig): ChainConnection {
   return connection;
 }
 
-/** Connect to all MVP chains */
-export function connectAllChains(): void {
-  for (const config of MVP_CHAINS) {
+/**
+ * Connect to a dynamic list of chains.
+ * Defaults to MVP_CHAINS when no list is provided.
+ */
+export function connectChains(chains: (ChainConfig | ExpandedChainConfig)[] = MVP_CHAINS): void {
+  for (const config of chains) {
     try {
       connectChain(config);
     } catch (err) {
@@ -59,8 +62,13 @@ export function connectAllChains(): void {
   }
 }
 
+/** Connect to all MVP chains (backward-compatible alias) */
+export function connectAllChains(): void {
+  connectChains(MVP_CHAINS);
+}
+
 /** Get PAPI client for a specific chain */
-export function getClient(chainId: ChainId): ReturnType<typeof createClient> {
+export function getClient(chainId: ExpandedChainId): ReturnType<typeof createClient> {
   const conn = connections.get(chainId);
   if (!conn) {
     throw new Error(`No connection for chain: ${chainId}`);
@@ -69,7 +77,7 @@ export function getClient(chainId: ChainId): ReturnType<typeof createClient> {
 }
 
 /** Get connection status for a specific chain */
-export function getChainStatus(chainId: ChainId): ChainStatus | undefined {
+export function getChainStatus(chainId: ExpandedChainId): ChainStatus | undefined {
   return connections.get(chainId)?.status;
 }
 
@@ -79,7 +87,7 @@ export function getAllChainStatuses(): ChainStatus[] {
 }
 
 /** Update last seen block for a chain */
-export function updateLastBlock(chainId: ChainId, blockNumber: number): void {
+export function updateLastBlock(chainId: ExpandedChainId, blockNumber: number): void {
   const conn = connections.get(chainId);
   if (conn) {
     conn.status.lastBlockSeen = blockNumber;

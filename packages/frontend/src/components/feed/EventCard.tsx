@@ -37,7 +37,7 @@ function EventSummary({ data }: { data: Record<string, unknown> }) {
       {entries.map(([key, val]) => (
         <span key={key}>
           <span className="text-gray-600">{key}:</span>{" "}
-          <span className="text-gray-400 font-mono">
+          <span className="font-mono text-gray-400">
             {typeof val === "bigint"
               ? val.toString()
               : typeof val === "object"
@@ -56,30 +56,34 @@ export function EventCard({ event, onToggle, getLabel }: EventCardProps) {
   const chainName = chain?.name ?? event.chainId;
 
   return (
-    <Card onClick={onToggle} className="group">
+    <Card
+      onClick={onToggle}
+      className="group min-h-[44px] cursor-pointer active:bg-gray-800/50"
+    >
       <CardHeader>
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Badges row — wraps on mobile */}
+        <div className="flex flex-1 flex-wrap items-center gap-1.5 sm:gap-2">
           {/* Chain badge */}
           <Badge
             style={{ backgroundColor: chainColor + "26", color: chainColor }}
-            className="font-semibold"
+            className="text-[10px] font-semibold sm:text-xs"
           >
             {chainName}
           </Badge>
 
           {/* Event type badge */}
-          <Badge variant="outline">
+          <Badge variant="outline" className="text-[10px] sm:text-xs">
             {formatEventType(event.eventType)}
           </Badge>
 
-          {/* Significance indicator with tooltip */}
+          {/* Significance indicator */}
           <span
             className="flex items-center gap-1"
             title={`Significance: ${SIGNIFICANCE_LABEL[event.significance]}`}
           >
             <span
               className={cn(
-                "inline-block h-2 w-2 rounded-full",
+                "inline-block h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2",
                 SIGNIFICANCE_DOT[event.significance],
               )}
               aria-label={SIGNIFICANCE_LABEL[event.significance]}
@@ -87,7 +91,7 @@ export function EventCard({ event, onToggle, getLabel }: EventCardProps) {
             {event.significance > 0 && (
               <span
                 className={cn(
-                  "text-xs font-medium",
+                  "text-[10px] font-medium sm:text-xs",
                   event.significance === 2 ? "text-red-400" : "text-yellow-400",
                 )}
               >
@@ -97,9 +101,9 @@ export function EventCard({ event, onToggle, getLabel }: EventCardProps) {
           </span>
         </div>
 
-        {/* Timestamp */}
+        {/* Timestamp — right-aligned, shrinks gracefully */}
         <span
-          className="shrink-0 text-xs text-gray-500"
+          className="shrink-0 text-[10px] text-gray-500 sm:text-xs"
           title={new Date(event.timestamp).toLocaleString()}
         >
           {formatTimestamp(event.timestamp)}
@@ -109,13 +113,13 @@ export function EventCard({ event, onToggle, getLabel }: EventCardProps) {
       <CardContent>
         {/* Accounts with optional whale labels */}
         {event.accounts.length > 0 && (
-          <div className="mb-1 flex flex-wrap gap-2">
+          <div className="mb-1 flex flex-wrap gap-1.5 sm:gap-2">
             {event.accounts.slice(0, 3).map((addr, i) => {
               const wl = getLabel?.(addr);
               return (
                 <span key={i} className="flex items-center gap-1">
                   <span
-                    className="rounded bg-gray-800 px-1.5 py-0.5 font-mono text-xs text-gray-300"
+                    className="rounded bg-gray-800 px-1.5 py-0.5 font-mono text-[10px] text-gray-300 sm:text-xs"
                     title={addr}
                   >
                     {truncateAddress(addr)}
@@ -125,7 +129,7 @@ export function EventCard({ event, onToggle, getLabel }: EventCardProps) {
               );
             })}
             {event.accounts.length > 3 && (
-              <span className="text-xs text-gray-600">
+              <span className="text-[10px] text-gray-600 sm:text-xs">
                 +{event.accounts.length - 3} more
               </span>
             )}
@@ -136,7 +140,7 @@ export function EventCard({ event, onToggle, getLabel }: EventCardProps) {
         <EventSummary data={event.data} />
 
         {/* Block number */}
-        <div className="mt-2 text-xs text-gray-600">
+        <div className="mt-1.5 text-[10px] text-gray-600 sm:mt-2 sm:text-xs">
           Block #{event.blockNumber.toLocaleString()}
         </div>
       </CardContent>
