@@ -22,6 +22,7 @@ import { registerExportRoutes } from "./routes/export.js";
 import { registerApiKeyRoutes } from "./routes/api-keys.js";
 import { registerDeveloperRoutes } from "./routes/developer.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
+import { registerGraphQLRoutes } from "./routes/graphql.js";
 import { connectAllChains, disconnectAllChains } from "./services/chain-connection.js";
 import { startAllIngestion, stopAllIngestion } from "./services/ingestion.js";
 import { closePool } from "./services/database.js";
@@ -56,6 +57,7 @@ async function main() {
   registerApiKeyRoutes(app);
   registerDeveloperRoutes(app);
   registerWebhookRoutes(app);
+  registerGraphQLRoutes(app);
 
   // Start server
   await app.listen({ port: PORT, host: HOST });
