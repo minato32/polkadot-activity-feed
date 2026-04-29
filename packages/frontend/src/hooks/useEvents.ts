@@ -55,6 +55,7 @@ export function useEvents(filters: FeedFilterState): UseEventsResult {
           chains: filters.chains.length > 0 ? filters.chains : undefined,
           eventTypes: filters.eventTypes.length > 0 ? filters.eventTypes : undefined,
           minSignificance: filters.minSignificance > 0 ? filters.minSignificance : undefined,
+          accounts: filters.accounts && filters.accounts.length > 0 ? filters.accounts : undefined,
           limit: PAGE_SIZE,
         });
 
@@ -83,6 +84,7 @@ export function useEvents(filters: FeedFilterState): UseEventsResult {
         chains: filters.chains.length > 0 ? filters.chains : undefined,
         eventTypes: filters.eventTypes.length > 0 ? filters.eventTypes : undefined,
         minSignificance: filters.minSignificance > 0 ? filters.minSignificance : undefined,
+        accounts: filters.accounts && filters.accounts.length > 0 ? filters.accounts : undefined,
         limit: PAGE_SIZE,
         cursor,
       });
