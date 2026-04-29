@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "clean": "rm -rf .next out"
+    "clean": "rm -rf .next out",
+    "test": "vitest run"
   },
   "dependencies": {
     "@polkadot-feed/shared": "*",
@@ -24,6 +25,8 @@
     "eslint-config-next": "^14.2.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0",
+    "jsdom": "^24.1.0"
   }
 }
