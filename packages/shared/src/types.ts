@@ -189,3 +189,83 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+// ─── Intelligence Types ───────────────────────────────────────────────────────
+
+/** Category of a whale/notable address label */
+export type LabelCategory =
+  | "exchange"
+  | "treasury"
+  | "validator"
+  | "fund"
+  | "bridge"
+  | "team";
+
+/** Known address label (whale tagging) */
+export interface WhaleLabel {
+  id: string;
+  address: string;
+  label: string;
+  category: LabelCategory;
+  source: "official" | "community";
+  verified: boolean;
+  createdAt: string;
+}
+
+/** Cross-chain message correlation record */
+export interface XcmCorrelation {
+  id: string;
+  sourceChainId: ChainId;
+  sourceEventId: string;
+  destChainId: ChainId;
+  destEventId: string | null;
+  messageHash: string;
+  status: "pending" | "matched" | "failed";
+  createdAt: string;
+}
+
+/** Aggregation of clustered events within a time window */
+export interface EventAggregation {
+  id: string;
+  eventType: EventType;
+  chainId?: ChainId;
+  timeWindowStart: string;
+  timeWindowEnd: string;
+  eventCount: number;
+  summary: string;
+  significance: Significance;
+  eventIds: string[];
+}
+
+/** User digest delivery configuration */
+export interface DigestConfig {
+  id: string;
+  userId: string;
+  frequency: "daily" | "weekly";
+  email?: string;
+  telegramChatId?: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+/** A single generated digest entry */
+export interface DigestEntry {
+  id: string;
+  digestConfigId: string;
+  generatedAt: string;
+  deliveredAt: string | null;
+  eventCount: number;
+  topEvents: ChainEvent[];
+}
+
+/** Governance context enriched from on-chain or external data */
+export interface GovernanceContext {
+  referendumIndex: number;
+  title: string | null;
+  track: string | null;
+  currentTally: {
+    ayes: string;
+    nays: string;
+  } | null;
+  status: string | null;
+}
