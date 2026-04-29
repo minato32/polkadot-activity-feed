@@ -5,6 +5,7 @@ import type { ChainEvent } from "@polkadot-feed/shared";
 import { EventCard } from "./EventCard";
 import { EventDetail } from "./EventDetail";
 import { Button } from "@/components/ui/Button";
+import { useLabels } from "@/hooks/useLabels";
 
 interface EventFeedProps {
   initialEvents: ChainEvent[];
@@ -21,6 +22,7 @@ export function EventFeed({
 }: EventFeedProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const { getLabel } = useLabels();
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
@@ -64,9 +66,10 @@ export function EventFeed({
             event={event}
             isExpanded={expandedId === event.id}
             onToggle={() => handleToggle(event.id)}
+            getLabel={getLabel}
           />
           {expandedId === event.id && (
-            <EventDetail event={event} />
+            <EventDetail event={event} getLabel={getLabel} />
           )}
         </div>
       ))}

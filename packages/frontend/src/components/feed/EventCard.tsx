@@ -1,9 +1,10 @@
 "use client";
 
-import type { ChainEvent } from "@polkadot-feed/shared";
+import type { ChainEvent, WhaleLabel } from "@polkadot-feed/shared";
 import { CHAIN_MAP } from "@polkadot-feed/shared";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
+import { WhaleTag } from "./WhaleTag";
 import {
   formatTimestamp,
   truncateAddress,
@@ -16,6 +17,7 @@ interface EventCardProps {
   event: ChainEvent;
   isExpanded?: boolean;
   onToggle: () => void;
+  getLabel?: (address: string) => WhaleLabel | undefined;
 }
 
 /** Human-readable label for an event type */
@@ -48,7 +50,7 @@ function EventSummary({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-export function EventCard({ event, onToggle }: EventCardProps) {
+export function EventCard({ event, onToggle, getLabel }: EventCardProps) {
   const chain = CHAIN_MAP.get(event.chainId);
   const chainColor = chain?.color ?? "#888";
   const chainName = chain?.name ?? event.chainId;
@@ -70,13 +72,17 @@ export function EventCard({ event, onToggle }: EventCardProps) {
             {formatEventType(event.eventType)}
           </Badge>
 
-          {/* Significance indicator */}
-          <span className="flex items-center gap-1">
+          {/* Significance indicator with tooltip */}
+          <span
+            className="flex items-center gap-1"
+            title={`Significance: ${SIGNIFICANCE_LABEL[event.significance]}`}
+          >
             <span
               className={cn(
                 "inline-block h-2 w-2 rounded-full",
                 SIGNIFICANCE_DOT[event.significance],
               )}
+              aria-label={SIGNIFICANCE_LABEL[event.significance]}
             />
             {event.significance > 0 && (
               <span
@@ -101,18 +107,23 @@ export function EventCard({ event, onToggle }: EventCardProps) {
       </CardHeader>
 
       <CardContent>
-        {/* Accounts */}
+        {/* Accounts with optional whale labels */}
         {event.accounts.length > 0 && (
           <div className="mb-1 flex flex-wrap gap-2">
-            {event.accounts.slice(0, 3).map((addr, i) => (
-              <span
-                key={i}
-                className="rounded bg-gray-800 px-1.5 py-0.5 font-mono text-xs text-gray-300"
-                title={addr}
-              >
-                {truncateAddress(addr)}
-              </span>
-            ))}
+            {event.accounts.slice(0, 3).map((addr, i) => {
+              const wl = getLabel?.(addr);
+              return (
+                <span key={i} className="flex items-center gap-1">
+                  <span
+                    className="rounded bg-gray-800 px-1.5 py-0.5 font-mono text-xs text-gray-300"
+                    title={addr}
+                  >
+                    {truncateAddress(addr)}
+                  </span>
+                  {wl && <WhaleTag label={wl.label} category={wl.category} />}
+                </span>
+              );
+            })}
             {event.accounts.length > 3 && (
               <span className="text-xs text-gray-600">
                 +{event.accounts.length - 3} more
