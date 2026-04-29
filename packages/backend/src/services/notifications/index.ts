@@ -1,6 +1,7 @@
 import type { ChainEvent, EventFilter, NotificationChannelConfig } from "@polkadot-feed/shared";
 import { query } from "../database.js";
 import { sendTelegramMessage, formatEventMessage } from "./telegram.js";
+import { sendDiscordWebhook, formatEventEmbed } from "./discord.js";
 
 interface NotificationConfigRow {
   id: string;
@@ -12,7 +13,7 @@ interface NotificationConfigRow {
   filters: EventFilter;
 }
 
-/** Returns true if the event matches all criteria in the filter */
+/** Returns true if the event satisfies all criteria in the filter */
 function eventMatchesFilter(event: ChainEvent, filters: EventFilter): boolean {
   if (filters.chains && !filters.chains.includes(event.chainId)) return false;
   if (filters.eventTypes && !filters.eventTypes.includes(event.eventType)) return false;
@@ -33,8 +34,8 @@ function eventMatchesFilter(event: ChainEvent, filters: EventFilter): boolean {
 }
 
 /**
- * Checks all enabled notification configs, matches them against the event,
- * and dispatches to the appropriate channel.
+ * Loads all enabled notification configs, matches them against the event,
+ * and dispatches to Telegram or Discord as configured.
  */
 export async function processNotification(event: ChainEvent): Promise<void> {
   const result = await query<NotificationConfigRow>(
@@ -53,35 +54,27 @@ export async function processNotification(event: ChainEvent): Promise<void> {
     if (row.channel === "telegram") {
       const cfg = row.config as { chatId?: string };
       if (cfg.chatId) {
-        const message = formatEventMessage(event);
         dispatches.push(
-          sendTelegramMessage(cfg.chatId, message).catch((err: unknown) => {
-            console.error(`Telegram dispatch failed for config ${row.id}:`, err);
-          }),
+          sendTelegramMessage(cfg.chatId, formatEventMessage(event)).catch(
+            (err: unknown) => {
+              console.error(`Telegram dispatch failed for config ${row.id}:`, err);
+            },
+          ),
         );
       }
-    }
-
-    if (row.channel === "discord") {
-      // Discord dispatch is wired in by the discord module
-      dispatches.push(
-        dispatchDiscord(row.id, row.config, event).catch((err: unknown) => {
-          console.error(`Discord dispatch failed for config ${row.id}:`, err);
-        }),
-      );
+    } else if (row.channel === "discord") {
+      const cfg = row.config as { webhookUrl?: string };
+      if (cfg.webhookUrl) {
+        dispatches.push(
+          sendDiscordWebhook(cfg.webhookUrl, formatEventEmbed(event)).catch(
+            (err: unknown) => {
+              console.error(`Discord dispatch failed for config ${row.id}:`, err);
+            },
+          ),
+        );
+      }
     }
   }
 
   await Promise.all(dispatches);
 }
-
-/** Placeholder resolved by discord.ts after it is loaded */
-async function dispatchDiscord(
-  _configId: string,
-  _config: NotificationChannelConfig,
-  _event: ChainEvent,
-): Promise<void> {
-  // Replaced by the real implementation imported in index.ts after Discord module loads
-}
-
-export { dispatchDiscord };
