@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS event_aggregations (
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- User digest configurations
+-- User digest configurations (one config per user)
 CREATE TABLE IF NOT EXISTS digest_configs (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id          UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS digest_configs (
   email            TEXT,
   telegram_chat_id TEXT,
   enabled          BOOLEAN NOT NULL DEFAULT true,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id)
 );
 
 -- Generated digest entries

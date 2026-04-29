@@ -16,6 +16,7 @@ import { registerNotificationRoutes } from "./routes/notifications.js";
 import { registerLabelRoutes } from "./routes/labels.js";
 import { registerXcmRoutes } from "./routes/xcm.js";
 import { registerAggregationRoutes } from "./routes/aggregations.js";
+import { registerDigestRoutes } from "./routes/digests.js";
 import { connectAllChains, disconnectAllChains } from "./services/chain-connection.js";
 import { startAllIngestion, stopAllIngestion } from "./services/ingestion.js";
 import { closePool } from "./services/database.js";
@@ -44,6 +45,7 @@ async function main() {
   registerLabelRoutes(app);
   registerXcmRoutes(app);
   registerAggregationRoutes(app);
+  registerDigestRoutes(app);
 
   // Start server
   await app.listen({ port: PORT, host: HOST });
