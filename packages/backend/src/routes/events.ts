@@ -1,8 +1,5 @@
 import type { FastifyInstance } from "fastify";
 import type {
-  ChainId,
-  EventType,
-  Significance,
   PaginatedResponse,
   ChainEvent,
 } from "@polkadot-feed/shared";
@@ -95,7 +92,7 @@ export function registerEventRoutes(app: FastifyInstance) {
 
       const nextCursor =
         hasMore && events.length > 0
-          ? events[events.length - 1].timestamp
+          ? events[events.length - 1]!.timestamp
           : null;
 
       const response: PaginatedResponse<ChainEvent> = {

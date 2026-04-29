@@ -47,8 +47,8 @@ const EVENT_TYPE_MAP: Record<string, EventType> = {
 
 /** Extract account addresses from event data */
 function extractAccounts(
-  pallet: string,
-  method: string,
+  _pallet: string,
+  _method: string,
   data: Record<string, unknown>,
 ): string[] {
   const accounts: string[] = [];

@@ -1,7 +1,7 @@
 import { createClient } from "polkadot-api";
 import { getWsProvider } from "polkadot-api/ws-provider/node";
 import type { ChainId, ChainConfig } from "@polkadot-feed/shared";
-import { MVP_CHAINS, CHAIN_MAP } from "@polkadot-feed/shared";
+import { MVP_CHAINS } from "@polkadot-feed/shared";
 
 export interface ChainStatus {
   chainId: ChainId;
@@ -20,12 +20,9 @@ interface ChainConnection {
 
 const connections = new Map<ChainId, ChainConnection>();
 
-const MAX_RECONNECT_DELAY = 30_000;
-const BASE_RECONNECT_DELAY = 1_000;
-
-function getReconnectDelay(attempts: number): number {
-  return Math.min(BASE_RECONNECT_DELAY * 2 ** attempts, MAX_RECONNECT_DELAY);
-}
+// Reserved for future reconnection logic
+// const MAX_RECONNECT_DELAY = 30_000;
+// const BASE_RECONNECT_DELAY = 1_000;
 
 /** Connect to a single chain via PAPI WebSocket */
 export function connectChain(config: ChainConfig): ChainConnection {
@@ -91,7 +88,7 @@ export function updateLastBlock(chainId: ChainId, blockNumber: number): void {
 
 /** Disconnect all chains gracefully */
 export async function disconnectAllChains(): Promise<void> {
-  for (const [chainId, conn] of connections) {
+  for (const [, conn] of connections) {
     try {
       conn.client.destroy();
       conn.status.connected = false;

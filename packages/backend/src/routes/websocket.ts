@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import type { WebSocket } from "ws";
 import type { SubscribePayload, ChainId } from "@polkadot-feed/shared";
-import { WS_HEARTBEAT_INTERVAL, CHANNELS } from "@polkadot-feed/shared";
+import { WS_HEARTBEAT_INTERVAL } from "@polkadot-feed/shared";
+import { CHANNELS } from "../services/redis.js";
 import { getSubscriber } from "../services/redis.js";
 
 interface ClientState {
