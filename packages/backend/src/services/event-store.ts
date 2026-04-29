@@ -4,7 +4,7 @@ import { query } from "./database.js";
 
 /** Insert a normalized event into PostgreSQL */
 export async function insertEvent(event: NormalizedEvent): Promise<string> {
-  const result = await query(
+  const result = await query<{ id: string }>(
     `INSERT INTO events (chain_id, block_number, timestamp, event_type, pallet, method, accounts, data, significance)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING id`,
@@ -21,7 +21,9 @@ export async function insertEvent(event: NormalizedEvent): Promise<string> {
     ],
   );
 
-  return result.rows[0].id;
+  const row = result.rows[0];
+  if (!row) throw new Error("INSERT events returned no row");
+  return row.id;
 }
 
 /** Convert a database row to a ChainEvent */

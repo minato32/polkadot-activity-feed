@@ -20,11 +20,11 @@ export function getPool(): pg.Pool {
   return pool;
 }
 
-export async function query(
+export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(
   text: string,
   params?: unknown[],
-): Promise<pg.QueryResult> {
-  return getPool().query(text, params);
+): Promise<pg.QueryResult<T>> {
+  return getPool().query<T>(text, params);
 }
 
 export async function healthCheck(): Promise<boolean> {
